@@ -56,10 +56,9 @@ const UVCamera = () => {
     
     await ffmpeg.exec([
       '-i', 'input.webm',
-      '-vf', 'scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2:black',
       '-c:v', 'libx264',
-      '-preset', 'fast',
-      '-crf', '23',
+      '-preset', 'ultrafast',
+      '-crf', '26',
       '-c:a', 'aac',
       '-b:a', '128k',
       '-r', '30',
@@ -192,27 +191,32 @@ const UVCamera = () => {
 
         ctx.putImageData(topImageData, 0, 0);
 
-        // Draw the product image in CENTER (always visible on mobile)
+        // Draw the product image (center-left, on the split line)
         if (productImageRef.current) {
           const img = productImageRef.current;
           const aspectRatio = img.naturalWidth / img.naturalHeight;
           
-          const productHeight = STORY_HEIGHT * 0.12;
+          // Product size: 18% of story height
+          const productHeight = STORY_HEIGHT * 0.18;
           const productWidth = productHeight * aspectRatio;
           
-          // Position center-left horizontally, at the split line vertically
-          const productX = (STORY_WIDTH - productWidth) / 2 - (STORY_WIDTH * 0.11);
+          // Position: center-left (10% offset from center), vertically on split line
+          const productX = (STORY_WIDTH - productWidth) / 2 - (STORY_WIDTH * 0.10);
           const productY = halfHeight - (productHeight / 2);
           
-          ctx.shadowColor = 'rgba(0, 0, 0, 0.6)';
-          ctx.shadowBlur = 25;
-          ctx.shadowOffsetX = 5;
-          ctx.shadowOffsetY = 5;
+          // Shadow for depth
+          ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+          ctx.shadowBlur = 20;
+          ctx.shadowOffsetX = 4;
+          ctx.shadowOffsetY = 4;
           
           ctx.drawImage(img, productX, productY, productWidth, productHeight);
           
+          // Reset shadow
           ctx.shadowColor = 'transparent';
           ctx.shadowBlur = 0;
+          ctx.shadowOffsetX = 0;
+          ctx.shadowOffsetY = 0;
         }
       }
       
