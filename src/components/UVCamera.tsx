@@ -77,30 +77,13 @@ const UVCamera = () => {
 
         const halfHeight = Math.floor(vh / 2);
 
-        // Draw video to fill half height (crop from center, no black bars)
-        // Calculate source crop to show more of the frame (less zoom)
-        const targetAspect = vw / halfHeight;
-        const videoAspect = vw / vh;
-        
-        let sourceX = 0, sourceY = 0, sourceW = vw, sourceH = vh;
-        
-        if (videoAspect < targetAspect) {
-          // Video is taller - crop top and bottom, keep center
-          sourceH = vw / targetAspect;
-          sourceY = (vh - sourceH) / 2;
-        } else {
-          // Video is wider - crop left and right, keep center
-          sourceW = vh * targetAspect;
-          sourceX = (vw - sourceW) / 2;
-        }
-
-        // STEP 1: Draw video cropped from center to fill top half
+        // STEP 1: Draw full video frame (original camera view, no extra zoom)
         ctx.save();
         if (facingMode === 'user') {
           ctx.translate(vw, 0);
           ctx.scale(-1, 1);
         }
-        ctx.drawImage(video, sourceX, sourceY, sourceW, sourceH, 0, 0, vw, halfHeight);
+        ctx.drawImage(video, 0, 0, vw, vh);
         ctx.restore();
 
         // STEP 2: Get the top half pixels
