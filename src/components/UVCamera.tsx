@@ -1,5 +1,5 @@
 import { useRef, useState, useCallback, useEffect } from 'react';
-import { Square, RotateCcw, Download, X, Loader2 } from 'lucide-react';
+import { Square, RotateCcw, Download, X, Loader2, Share2 } from 'lucide-react';
 import { FFmpeg } from '@ffmpeg/ffmpeg';
 import { fetchFile, toBlobURL } from '@ffmpeg/util';
 import productImage from '@/assets/product.webp';
@@ -311,6 +311,29 @@ const UVCamera = () => {
     a.click();
   }, [recordedVideoUrl]);
 
+  // Share video
+  const shareVideo = useCallback(async () => {
+    if (!mp4BlobRef.current) return;
+    
+    const file = new File([mp4BlobRef.current], `pixxel-uv-${Date.now()}.mp4`, {
+      type: 'video/mp4'
+    });
+    
+    if (navigator.share && navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({
+          files: [file],
+          title: 'UV Camera Video',
+        });
+      } catch (error) {
+        console.log('Share cancelled or failed:', error);
+      }
+    } else {
+      // Fallback to download if share not supported
+      downloadVideo();
+    }
+  }, [downloadVideo]);
+
   // Switch camera
   const switchCamera = useCallback(() => {
     if (streamRef.current) {
@@ -377,26 +400,33 @@ const UVCamera = () => {
           
           {/* Preview controls */}
           <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-background via-background/80 to-transparent">
-            <div className="flex items-center justify-center gap-6">
+            <div className="flex items-center justify-center gap-4">
               <button 
                 onClick={resetCamera}
-                className="w-14 h-14 rounded-full bg-secondary flex items-center justify-center text-foreground transition-transform active:scale-95"
+                className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center text-foreground transition-transform active:scale-95"
               >
-                <X className="w-6 h-6" />
+                <X className="w-5 h-5" />
               </button>
               
               <button 
                 onClick={downloadVideo}
-                className="w-16 h-16 rounded-full bg-primary flex items-center justify-center text-primary-foreground transition-transform active:scale-95"
+                className="w-14 h-14 rounded-full bg-primary flex items-center justify-center text-primary-foreground transition-transform active:scale-95"
               >
-                <Download className="w-7 h-7" />
+                <Download className="w-6 h-6" />
+              </button>
+              
+              <button 
+                onClick={shareVideo}
+                className="w-16 h-16 rounded-full bg-accent flex items-center justify-center text-accent-foreground transition-transform active:scale-95"
+              >
+                <Share2 className="w-7 h-7" />
               </button>
               
               <button 
                 onClick={resetCamera}
-                className="w-14 h-14 rounded-full bg-secondary flex items-center justify-center text-foreground transition-transform active:scale-95"
+                className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center text-foreground transition-transform active:scale-95"
               >
-                <RotateCcw className="w-6 h-6" />
+                <RotateCcw className="w-5 h-5" />
               </button>
             </div>
           </div>
