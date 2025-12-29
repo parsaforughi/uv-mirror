@@ -77,19 +77,26 @@ const UVCamera = () => {
 
         const halfHeight = Math.floor(vh / 2);
 
-        // Calculate scaled dimensions to fit full video in half height
+        // Calculate scaled dimensions to fit full video in half height (with zoom out)
+        const zoomFactor = 0.75; // Less than 1 = zoom out
         const videoAspect = vw / vh;
-        const scaledWidth = halfHeight * videoAspect;
+        const scaledHeight = halfHeight * zoomFactor;
+        const scaledWidth = scaledHeight * videoAspect;
         const offsetX = (vw - scaledWidth) / 2; // Center horizontally
+        const offsetY = (halfHeight - scaledHeight) / 2; // Center vertically
 
-        // STEP 1: Draw scaled video in TOP HALF (full video fits in half height)
+        // Clear canvas first (for the areas outside the video)
+        ctx.fillStyle = '#000';
+        ctx.fillRect(0, 0, vw, halfHeight);
+
+        // STEP 1: Draw scaled video in TOP HALF (zoomed out)
         ctx.save();
         if (facingMode === 'user') {
           ctx.translate(vw, 0);
           ctx.scale(-1, 1);
         }
-        // Draw full video scaled to fit in top half
-        ctx.drawImage(video, 0, 0, vw, vh, offsetX, 0, scaledWidth, halfHeight);
+        // Draw full video scaled and centered
+        ctx.drawImage(video, 0, 0, vw, vh, offsetX, offsetY, scaledWidth, scaledHeight);
         ctx.restore();
 
         // STEP 2: Get the top half pixels
