@@ -77,22 +77,28 @@ const UVCamera = () => {
 
         const halfHeight = Math.floor(vh / 2);
 
-        // STEP 1: Draw the full video frame once (mirrored if front camera)
+        // Calculate scaled dimensions to fit full video in half height
+        const videoAspect = vw / vh;
+        const scaledWidth = halfHeight * videoAspect;
+        const offsetX = (vw - scaledWidth) / 2; // Center horizontally
+
+        // STEP 1: Draw scaled video in TOP HALF (full video fits in half height)
         ctx.save();
         if (facingMode === 'user') {
           ctx.translate(vw, 0);
           ctx.scale(-1, 1);
         }
-        ctx.drawImage(video, 0, 0, vw, vh);
+        // Draw full video scaled to fit in top half
+        ctx.drawImage(video, 0, 0, vw, vh, offsetX, 0, scaledWidth, halfHeight);
         ctx.restore();
 
-        // STEP 2: Get the top half of the video (this is the content we want in BOTH halves)
+        // STEP 2: Get the top half pixels
         const topHalfPixels = ctx.getImageData(0, 0, vw, halfHeight);
         
-        // STEP 3: Copy the top half to the bottom half (so both show SAME content)
+        // STEP 3: Copy to bottom half (same content in both)
         ctx.putImageData(topHalfPixels, 0, halfHeight);
 
-        // STEP 4: Apply enhanced UV filter to TOP HALF only
+        // STEP 4: Apply UV invert filter to TOP HALF only
         const topImageData = ctx.getImageData(0, 0, vw, halfHeight);
         const data = topImageData.data;
 
