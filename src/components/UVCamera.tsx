@@ -110,16 +110,16 @@ const UVCamera = () => {
 
         ctx.putImageData(topImageData, 0, 0);
 
-        // Draw the product image on MID-RIGHT (visible on mobile)
+        // Draw the product image in CENTER (always visible on mobile)
         if (productImageRef.current) {
           const img = productImageRef.current;
           const aspectRatio = img.naturalWidth / img.naturalHeight;
           
-          const productHeight = vh * 0.25;
+          const productHeight = vh * 0.20;
           const productWidth = productHeight * aspectRatio;
           
-          // Position on right side so it's visible with object-cover on mobile
-          const productX = vw - productWidth - (vw * 0.08);
+          // Position in center horizontally, at the split line vertically
+          const productX = (vw - productWidth) / 2;
           const productY = halfHeight - (productHeight / 2);
           
           ctx.shadowColor = 'rgba(0, 0, 0, 0.6)';
