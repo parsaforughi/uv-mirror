@@ -200,8 +200,8 @@ const UVCamera = () => {
           const productHeight = STORY_HEIGHT * 0.18;
           const productWidth = productHeight * aspectRatio;
           
-          // Position: center-left (18% offset from center), vertically on split line
-          const productX = (STORY_WIDTH - productWidth) / 2 - (STORY_WIDTH * 0.18);
+          // Position: center-left (25% offset from center), vertically on split line
+          const productX = (STORY_WIDTH - productWidth) / 2 - (STORY_WIDTH * 0.25);
           const productY = halfHeight - (productHeight / 2);
           
           // Shadow for depth
