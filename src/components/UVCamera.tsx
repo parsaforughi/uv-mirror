@@ -119,7 +119,7 @@ const UVCamera = () => {
           const productWidth = productHeight * aspectRatio;
           
           // Position center-left horizontally, at the split line vertically
-          const productX = (vw - productWidth) / 2 - (vw * 0.08);
+          const productX = (vw - productWidth) / 2 - (vw * 0.11);
           const productY = halfHeight - (productHeight / 2);
           
           ctx.shadowColor = 'rgba(0, 0, 0, 0.6)';
