@@ -56,11 +56,13 @@ const UVCamera = () => {
     
     await ffmpeg.exec([
       '-i', 'input.webm',
+      '-vf', 'scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2:black',
       '-c:v', 'libx264',
       '-preset', 'fast',
       '-crf', '23',
       '-c:a', 'aac',
       '-b:a', '128k',
+      '-r', '30',
       'output.mp4'
     ]);
     
@@ -126,35 +128,60 @@ const UVCamera = () => {
         const vw = video.videoWidth;
         const vh = video.videoHeight;
         
-        // Canvas is the full height, we show the same frame twice
-        canvas.width = vw;
-        canvas.height = vh;
+        // Fixed story size (1080x1920 = 9:16 aspect ratio)
+        const STORY_WIDTH = 1080;
+        const STORY_HEIGHT = 1920;
+        
+        canvas.width = STORY_WIDTH;
+        canvas.height = STORY_HEIGHT;
 
-        const halfHeight = Math.floor(vh / 2);
+        const halfHeight = STORY_HEIGHT / 2;
 
-        // Calculate scaled dimensions to fit full video in half height
+        // Calculate how to fit the video into half height while maintaining aspect ratio
         const videoAspect = vw / vh;
-        const scaledWidth = halfHeight * videoAspect;
-        const offsetX = (vw - scaledWidth) / 2; // Center horizontally
+        const targetAspect = STORY_WIDTH / halfHeight;
+        
+        let drawWidth, drawHeight, drawX, drawY;
+        
+        if (videoAspect > targetAspect) {
+          // Video is wider - fit by height, crop sides
+          drawHeight = halfHeight;
+          drawWidth = halfHeight * videoAspect;
+          drawX = (STORY_WIDTH - drawWidth) / 2;
+          drawY = 0;
+        } else {
+          // Video is taller - fit by width, crop top/bottom
+          drawWidth = STORY_WIDTH;
+          drawHeight = STORY_WIDTH / videoAspect;
+          drawX = 0;
+          drawY = (halfHeight - drawHeight) / 2;
+        }
 
-        // STEP 1: Draw scaled video in TOP HALF (full video fits in half height)
+        // Clear canvas with black background
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(0, 0, STORY_WIDTH, STORY_HEIGHT);
+
+        // STEP 1: Draw video in TOP HALF (scaled to fit)
         ctx.save();
+        ctx.beginPath();
+        ctx.rect(0, 0, STORY_WIDTH, halfHeight);
+        ctx.clip();
+        
         if (facingMode === 'user') {
-          ctx.translate(vw, 0);
+          ctx.translate(STORY_WIDTH, 0);
           ctx.scale(-1, 1);
         }
-        // Draw full video scaled to fit in top half
-        ctx.drawImage(video, 0, 0, vw, vh, offsetX, 0, scaledWidth, halfHeight);
+        ctx.drawImage(video, drawX, drawY, drawWidth, drawHeight);
         ctx.restore();
 
         // STEP 2: Get the top half pixels
-        const topHalfPixels = ctx.getImageData(0, 0, vw, halfHeight);
+        const topHalfPixels = ctx.getImageData(0, 0, STORY_WIDTH, halfHeight);
         
         // STEP 3: Copy to bottom half (same content in both)
         ctx.putImageData(topHalfPixels, 0, halfHeight);
 
         // STEP 4: Apply UV invert filter to TOP HALF only
-        const topImageData = ctx.getImageData(0, 0, vw, halfHeight);
+        const topImageData = ctx.getImageData(0, 0, STORY_WIDTH, halfHeight);
         const data = topImageData.data;
 
         for (let i = 0; i < data.length; i += 4) {
@@ -170,11 +197,11 @@ const UVCamera = () => {
           const img = productImageRef.current;
           const aspectRatio = img.naturalWidth / img.naturalHeight;
           
-          const productHeight = vh * 0.20;
+          const productHeight = STORY_HEIGHT * 0.12;
           const productWidth = productHeight * aspectRatio;
           
           // Position center-left horizontally, at the split line vertically
-          const productX = (vw - productWidth) / 2 - (vw * 0.11);
+          const productX = (STORY_WIDTH - productWidth) / 2 - (STORY_WIDTH * 0.11);
           const productY = halfHeight - (productHeight / 2);
           
           ctx.shadowColor = 'rgba(0, 0, 0, 0.6)';
