@@ -1,8 +1,10 @@
 import { useRef, useState, useCallback, useEffect } from 'react';
-import { Square, RotateCcw, Download, X } from 'lucide-react';
+import { Square, RotateCcw, Download, X, Loader2 } from 'lucide-react';
+import { FFmpeg } from '@ffmpeg/ffmpeg';
+import { fetchFile, toBlobURL } from '@ffmpeg/util';
 import productImage from '@/assets/product.webp';
 
-type RecordingState = 'idle' | 'recording' | 'preview';
+type RecordingState = 'idle' | 'recording' | 'preview' | 'converting';
 
 const UVCamera = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -12,12 +14,65 @@ const UVCamera = () => {
   const streamRef = useRef<MediaStream | null>(null);
   const animationFrameRef = useRef<number>(0);
   const productImageRef = useRef<HTMLImageElement | null>(null);
+  const ffmpegRef = useRef<FFmpeg | null>(null);
+  const mp4BlobRef = useRef<Blob | null>(null);
 
   const [recordingState, setRecordingState] = useState<RecordingState>('idle');
   const [recordedVideoUrl, setRecordedVideoUrl] = useState<string | null>(null);
   const [recordingTime, setRecordingTime] = useState(0);
   const [cameraReady, setCameraReady] = useState(false);
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
+  const [ffmpegLoaded, setFfmpegLoaded] = useState(false);
+  const [convertProgress, setConvertProgress] = useState(0);
+
+  // Load FFmpeg
+  useEffect(() => {
+    const loadFFmpeg = async () => {
+      const ffmpeg = new FFmpeg();
+      ffmpeg.on('progress', ({ progress }) => {
+        setConvertProgress(Math.round(progress * 100));
+      });
+      
+      const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/esm';
+      await ffmpeg.load({
+        coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
+        wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
+      });
+      
+      ffmpegRef.current = ffmpeg;
+      setFfmpegLoaded(true);
+    };
+    
+    loadFFmpeg();
+  }, []);
+
+  // Convert WebM to MP4
+  const convertToMp4 = async (webmBlob: Blob): Promise<Blob> => {
+    const ffmpeg = ffmpegRef.current;
+    if (!ffmpeg) throw new Error('FFmpeg not loaded');
+    
+    const webmData = await fetchFile(webmBlob);
+    await ffmpeg.writeFile('input.webm', webmData);
+    
+    await ffmpeg.exec([
+      '-i', 'input.webm',
+      '-c:v', 'libx264',
+      '-preset', 'fast',
+      '-crf', '23',
+      '-c:a', 'aac',
+      '-b:a', '128k',
+      'output.mp4'
+    ]);
+    
+    const mp4Data = await ffmpeg.readFile('output.mp4');
+    const mp4Blob = new Blob([mp4Data], { type: 'video/mp4' });
+    
+    // Cleanup
+    await ffmpeg.deleteFile('input.webm');
+    await ffmpeg.deleteFile('output.mp4');
+    
+    return mp4Blob;
+  };
 
   // Preload product image
   useEffect(() => {
@@ -165,11 +220,27 @@ const UVCamera = () => {
       }
     };
 
-    mediaRecorder.onstop = () => {
-      const blob = new Blob(chunksRef.current, { type: 'video/webm' });
-      const url = URL.createObjectURL(blob);
-      setRecordedVideoUrl(url);
-      setRecordingState('preview');
+    mediaRecorder.onstop = async () => {
+      const webmBlob = new Blob(chunksRef.current, { type: 'video/webm' });
+      
+      // Convert to MP4
+      setRecordingState('converting');
+      setConvertProgress(0);
+      
+      try {
+        const mp4Blob = await convertToMp4(webmBlob);
+        mp4BlobRef.current = mp4Blob;
+        const url = URL.createObjectURL(mp4Blob);
+        setRecordedVideoUrl(url);
+        setRecordingState('preview');
+      } catch (error) {
+        console.error('Error converting to MP4:', error);
+        // Fallback to WebM if conversion fails
+        mp4BlobRef.current = webmBlob;
+        const url = URL.createObjectURL(webmBlob);
+        setRecordedVideoUrl(url);
+        setRecordingState('preview');
+      }
     };
 
     mediaRecorderRef.current = mediaRecorder;
@@ -203,13 +274,13 @@ const UVCamera = () => {
     setRecordingState('idle');
   }, [recordedVideoUrl]);
 
-  // Download video
+  // Download video as MP4
   const downloadVideo = useCallback(() => {
-    if (!recordedVideoUrl) return;
+    if (!recordedVideoUrl || !mp4BlobRef.current) return;
     
     const a = document.createElement('a');
     a.href = recordedVideoUrl;
-    a.download = `pixxel-uv-${Date.now()}.webm`;
+    a.download = `pixxel-uv-${Date.now()}.mp4`;
     a.click();
   }, [recordedVideoUrl]);
 
@@ -250,6 +321,21 @@ const UVCamera = () => {
         playsInline 
         muted
       />
+      
+      {/* Converting mode */}
+      {recordingState === 'converting' && (
+        <div className="absolute inset-0 bg-background/90 flex flex-col items-center justify-center z-50">
+          <Loader2 className="w-16 h-16 text-primary animate-spin mb-4" />
+          <p className="text-lg font-semibold text-foreground mb-2">Converting to MP4...</p>
+          <div className="w-48 h-2 bg-secondary rounded-full overflow-hidden">
+            <div 
+              className="h-full bg-primary transition-all duration-300"
+              style={{ width: `${convertProgress}%` }}
+            />
+          </div>
+          <p className="text-sm text-muted-foreground mt-2">{convertProgress}%</p>
+        </div>
+      )}
       
       {/* Preview mode */}
       {recordingState === 'preview' && recordedVideoUrl ? (
