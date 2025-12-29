@@ -97,26 +97,9 @@ const UVCamera = () => {
         const data = topImageData.data;
 
         for (let i = 0; i < data.length; i += 4) {
-          // Invert colors
-          let r = 255 - data[i];
-          let g = 255 - data[i + 1];
-          let b = 255 - data[i + 2];
-          
-          // High contrast - makes darks DARKER (sunscreen more visible)
-          const contrast = 1.6;
-          r = Math.min(255, Math.max(0, ((r - 128) * contrast) + 128));
-          g = Math.min(255, Math.max(0, ((g - 128) * contrast) + 128));
-          b = Math.min(255, Math.max(0, ((b - 128) * contrast) + 128));
-          
-          // Gamma curve - push darks even darker
-          const gamma = 0.8;
-          r = Math.round(255 * Math.pow(r / 255, gamma));
-          g = Math.round(255 * Math.pow(g / 255, gamma));
-          b = Math.round(255 * Math.pow(b / 255, gamma));
-          
-          data[i] = r;
-          data[i + 1] = g;
-          data[i + 2] = b;
+          data[i] = 255 - data[i];         // R
+          data[i + 1] = 255 - data[i + 1]; // G
+          data[i + 2] = 255 - data[i + 2]; // B
         }
 
         ctx.putImageData(topImageData, 0, 0);
