@@ -77,26 +77,30 @@ const UVCamera = () => {
 
         const halfHeight = Math.floor(vh / 2);
 
-        // Calculate scaled dimensions to fit full video in half height (with zoom out)
-        const zoomFactor = 0.75; // Less than 1 = zoom out
+        // Draw video to fill half height (crop from center, no black bars)
+        // Calculate source crop to show more of the frame (less zoom)
+        const targetAspect = vw / halfHeight;
         const videoAspect = vw / vh;
-        const scaledHeight = halfHeight * zoomFactor;
-        const scaledWidth = scaledHeight * videoAspect;
-        const offsetX = (vw - scaledWidth) / 2; // Center horizontally
-        const offsetY = (halfHeight - scaledHeight) / 2; // Center vertically
+        
+        let sourceX = 0, sourceY = 0, sourceW = vw, sourceH = vh;
+        
+        if (videoAspect < targetAspect) {
+          // Video is taller - crop top and bottom, keep center
+          sourceH = vw / targetAspect;
+          sourceY = (vh - sourceH) / 2;
+        } else {
+          // Video is wider - crop left and right, keep center
+          sourceW = vh * targetAspect;
+          sourceX = (vw - sourceW) / 2;
+        }
 
-        // Clear canvas first (for the areas outside the video)
-        ctx.fillStyle = '#000';
-        ctx.fillRect(0, 0, vw, halfHeight);
-
-        // STEP 1: Draw scaled video in TOP HALF (zoomed out)
+        // STEP 1: Draw video cropped from center to fill top half
         ctx.save();
         if (facingMode === 'user') {
           ctx.translate(vw, 0);
           ctx.scale(-1, 1);
         }
-        // Draw full video scaled and centered
-        ctx.drawImage(video, 0, 0, vw, vh, offsetX, offsetY, scaledWidth, scaledHeight);
+        ctx.drawImage(video, sourceX, sourceY, sourceW, sourceH, 0, 0, vw, halfHeight);
         ctx.restore();
 
         // STEP 2: Get the top half pixels
