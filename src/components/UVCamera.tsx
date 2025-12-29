@@ -77,13 +77,19 @@ const UVCamera = () => {
 
         const halfHeight = Math.floor(vh / 2);
 
-        // STEP 1: Draw full video frame (original camera view, no extra zoom)
+        // Calculate scaled dimensions to fit full video in half height
+        const videoAspect = vw / vh;
+        const scaledWidth = halfHeight * videoAspect;
+        const offsetX = (vw - scaledWidth) / 2; // Center horizontally
+
+        // STEP 1: Draw scaled video in TOP HALF (full video fits in half height)
         ctx.save();
         if (facingMode === 'user') {
           ctx.translate(vw, 0);
           ctx.scale(-1, 1);
         }
-        ctx.drawImage(video, 0, 0, vw, vh);
+        // Draw full video scaled to fit in top half
+        ctx.drawImage(video, 0, 0, vw, vh, offsetX, 0, scaledWidth, halfHeight);
         ctx.restore();
 
         // STEP 2: Get the top half pixels
@@ -287,7 +293,7 @@ const UVCamera = () => {
           {/* Split-screen Camera View */}
           <canvas 
             ref={combinedCanvasRef} 
-            className="w-full h-full object-contain"
+            className="w-full h-full object-cover"
           />
           
           {/* Recording indicator */}
