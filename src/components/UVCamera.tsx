@@ -77,44 +77,22 @@ const UVCamera = () => {
 
         const halfHeight = Math.floor(vh / 2);
 
-        // We need to draw the SAME full video frame in BOTH halves
-        // Each half shows the complete face, just with different filters
-
-        // --- BOTTOM HALF: Normal view ---
+        // STEP 1: Draw the full video frame once (mirrored if front camera)
         ctx.save();
-        // Clip to bottom half
-        ctx.beginPath();
-        ctx.rect(0, halfHeight, vw, halfHeight);
-        ctx.clip();
-        
-        // Mirror if front camera
         if (facingMode === 'user') {
           ctx.translate(vw, 0);
           ctx.scale(-1, 1);
         }
-        
-        // Draw full video maintaining aspect ratio (no stretching)
-        ctx.drawImage(video, 0, 0, vw, vh, 0, 0, vw, vh);
+        ctx.drawImage(video, 0, 0, vw, vh);
         ctx.restore();
 
-        // --- TOP HALF: Inverted view ---
-        ctx.save();
-        // Clip to top half
-        ctx.beginPath();
-        ctx.rect(0, 0, vw, halfHeight);
-        ctx.clip();
+        // STEP 2: Get the top half of the video (this is the content we want in BOTH halves)
+        const topHalfPixels = ctx.getImageData(0, 0, vw, halfHeight);
         
-        // Mirror if front camera
-        if (facingMode === 'user') {
-          ctx.translate(vw, 0);
-          ctx.scale(-1, 1);
-        }
-        
-        // Draw full video maintaining aspect ratio (no stretching)
-        ctx.drawImage(video, 0, 0, vw, vh, 0, 0, vw, vh);
-        ctx.restore();
+        // STEP 3: Copy the top half to the bottom half (so both show SAME content)
+        ctx.putImageData(topHalfPixels, 0, halfHeight);
 
-        // Apply enhanced UV filter to TOP HALF only
+        // STEP 4: Apply enhanced UV filter to TOP HALF only
         const topImageData = ctx.getImageData(0, 0, vw, halfHeight);
         const data = topImageData.data;
 
