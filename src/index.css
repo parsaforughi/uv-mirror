@@ -1,0 +1,103 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    --background: 210 20% 6%;
+    --foreground: 210 40% 98%;
+
+    --card: 210 15% 10%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 210 15% 10%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 205 70% 75%;
+    --primary-foreground: 210 20% 6%;
+
+    --secondary: 205 30% 20%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 210 15% 15%;
+    --muted-foreground: 210 20% 60%;
+
+    --accent: 24 95% 55%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 210 20% 20%;
+    --input: 210 20% 20%;
+    --ring: 205 70% 75%;
+
+    --radius: 1rem;
+
+    --uv-glow: 205 100% 70%;
+    --record-red: 0 85% 55%;
+
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    --background: 210 20% 6%;
+    --foreground: 210 40% 98%;
+    --card: 210 15% 10%;
+    --card-foreground: 210 40% 98%;
+    --popover: 210 15% 10%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 205 70% 75%;
+    --primary-foreground: 210 20% 6%;
+    --secondary: 205 30% 20%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 210 15% 15%;
+    --muted-foreground: 210 20% 60%;
+    --accent: 24 95% 55%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 210 20% 20%;
+    --input: 210 20% 20%;
+    --ring: 205 70% 75%;
+  }
+}
+
+@keyframes pulse-record {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.1); opacity: 0.8; }
+}
+
+@keyframes glow {
+  0%, 100% { box-shadow: 0 0 20px hsl(205 100% 70% / 0.5); }
+  50% { box-shadow: 0 0 40px hsl(205 100% 70% / 0.8); }
+}
+
+.animate-pulse-record {
+  animation: pulse-record 1s ease-in-out infinite;
+}
+
+.animate-glow {
+  animation: glow 2s ease-in-out infinite;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
