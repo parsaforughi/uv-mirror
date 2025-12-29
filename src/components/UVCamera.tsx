@@ -287,7 +287,7 @@ const UVCamera = () => {
           {/* Split-screen Camera View */}
           <canvas 
             ref={combinedCanvasRef} 
-            className="w-full h-full object-cover"
+            className="w-full h-full object-contain"
           />
           
           {/* Recording indicator */}
