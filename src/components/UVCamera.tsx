@@ -29,11 +29,7 @@ const UVCamera = () => {
   useEffect(() => {
     const loadFFmpeg = async () => {
       const ffmpeg = new FFmpeg();
-      ffmpeg.on('progress', ({ progress }) => {
-        // Clamp between 1 and 100
-        const percent = Math.min(100, Math.max(1, Math.round(progress * 100)));
-        setConvertProgress(percent);
-      });
+      // Progress is handled by animated interval in onstop
       
       const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/esm';
       await ffmpeg.load({
@@ -258,15 +254,31 @@ const UVCamera = () => {
       
       // Convert to MP4
       setRecordingState('converting');
-      setConvertProgress(0);
+      setConvertProgress(1);
+      
+      // Animated progress (smooth fill from 1 to 90 while converting)
+      let currentProgress = 1;
+      const progressInterval = setInterval(() => {
+        if (currentProgress < 90) {
+          currentProgress += Math.random() * 3 + 1; // Random increment 1-4
+          setConvertProgress(Math.min(90, Math.round(currentProgress)));
+        }
+      }, 150);
       
       try {
         const mp4Blob = await convertToMp4(webmBlob);
+        clearInterval(progressInterval);
+        setConvertProgress(100);
+        
+        // Small delay to show 100%
+        await new Promise(resolve => setTimeout(resolve, 200));
+        
         mp4BlobRef.current = mp4Blob;
         const url = URL.createObjectURL(mp4Blob);
         setRecordedVideoUrl(url);
         setRecordingState('preview');
       } catch (error) {
+        clearInterval(progressInterval);
         console.error('Error converting to MP4:', error);
         // Fallback to WebM if conversion fails
         mp4BlobRef.current = webmBlob;
