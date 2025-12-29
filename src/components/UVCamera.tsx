@@ -30,7 +30,9 @@ const UVCamera = () => {
     const loadFFmpeg = async () => {
       const ffmpeg = new FFmpeg();
       ffmpeg.on('progress', ({ progress }) => {
-        setConvertProgress(Math.round(progress * 100));
+        // Clamp between 1 and 100
+        const percent = Math.min(100, Math.max(1, Math.round(progress * 100)));
+        setConvertProgress(percent);
       });
       
       const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/esm';
